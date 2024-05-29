@@ -43,7 +43,7 @@ namespace Practica2
         private void Salir_Click(object sender, EventArgs e)
         {
 
-            DialogResult resultado = MessageBox.Show("¿Estás seguro de que quieres salir?", "Confirmar salida", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult resultado = MessageBox.Show("¿Estás seguro de que quieres salir?", "Confirmal a tu salida", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
 
             if (resultado == DialogResult.Yes)
