@@ -111,7 +111,7 @@ namespace Practica2
                 {
                     // Manejar cualquier error que pueda ocurrir durante el proceso de guardar
                     this.Invoke((MethodInvoker)delegate {
-                        MessageBox.Show("Error al guardar los datos nayeli y aalain:  " + ex.Message);
+                        MessageBox.Show("Error al guardar los datos:  " + ex.Message);
                     });
                 }
             }
