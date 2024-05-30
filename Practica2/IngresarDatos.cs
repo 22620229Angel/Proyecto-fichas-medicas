@@ -14,41 +14,41 @@ namespace Practica2
     public partial class IngresarDatos : Form
     {
         private int fichaNumero = 0;
-        public IngresarDatos()
-        {
-            InitializeComponent();
-            // Ocultar la barra de progreso al inicio
-            progressBar1.Visible = false;
-        }
-
-        static String conexion = "server=localhost:3307;PORT=3307;DATABASE= fichas;UID=root;PASSWORDS=;";
-        MySqlConnection cn = new MySqlConnection(conexion);
+        private Conexion conexion;
         private string nombre;
         private string apellido;
         private string edad;
         private string curp;
         private string telefono;
+        private object nombreTextBox;
+
+        public IngresarDatos()
+        {
+            InitializeComponent();
+            // Ocultar la barra de progreso al inicio
+            progressBar1.Visible = false;
+            // Inicializar la conexión
+            conexion = new Conexion();
+
+
+        }
+
+
+
 
         private void Regresar2_Click(object sender, EventArgs e)
         {
             Area formularioArea = new Area();
-
-
             formularioArea.Show();
-
-
             this.Close();
         }
 
         private void Salir_Click(object sender, EventArgs e)
         {
-
-            DialogResult resultado = MessageBox.Show("¿Estás seguro de que quieres salir?", "Confirmal a tu salida", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
+            DialogResult resultado = MessageBox.Show("¿Estás seguro de que quieres salir?", "Confirma tu salida", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (resultado == DialogResult.Yes)
             {
-
                 Application.Exit();
             }
         }
@@ -66,7 +66,8 @@ namespace Practica2
         {
             for (int i = 0; i <= 100; i++)
             {
-                this.Invoke((MethodInvoker)delegate {
+                this.Invoke((MethodInvoker)delegate
+                {
                     progressBar1.Value = i;
                 });
                 Thread.Sleep(50);
@@ -74,7 +75,8 @@ namespace Practica2
             // Incrementar el número de ficha al completarse la barra de progreso
             fichaNumero++;
             GuardarDatosEnBaseDeDatos();  // Llama al método para guardar los datos en la base de datos
-            this.Invoke((MethodInvoker)delegate {
+            this.Invoke((MethodInvoker)delegate
+            {
                 // Mostrar mensaje de éxito al completarse la barra de progreso
                 MessageBox.Show($"Tu número de ficha es: {fichaNumero}.", "Mensaje", MessageBoxButtons.OK, MessageBoxIcon.Information);
             });
@@ -83,14 +85,30 @@ namespace Practica2
         private void GuardarDatosEnBaseDeDatos()
         {
             // Crear la conexión
-            using (MySqlConnection connection = new MySqlConnection(conexion))
+            using (MySqlConnection connection = conexion.getConexion())
             {
                 try
                 {
-                    // Abrir la conexión
-                    connection.Open();
+                    // Preparar la consulta SQL para obtener la lista de bases de datos
+                    string queryListDB = "SHOW DATABASES";
 
-                    // Preparar la consulta SQL
+                    List<string> listaBasesDatos = new List<string>();
+
+                    // Crear el comando SQL para obtener la lista de bases de datos
+                    using (MySqlCommand cmdListDB = new MySqlCommand(queryListDB, connection))
+                    {
+                        // Ejecutar la consulta para obtener la lista de bases de datos
+                        using (MySqlDataReader reader = cmdListDB.ExecuteReader())
+                        {
+                            // Leer y almacenar las bases de datos en la lista
+                            while (reader.Read())
+                            {
+                                listaBasesDatos.Add(reader.GetString(0));
+                            }
+                        }
+                    }
+
+                    // Preparar la consulta SQL para guardar los datos en la tabla fichas
                     string query = "INSERT INTO fichas (nombre, apellido, edad, curp, telefono) VALUES (@nombre, @apellido, @edad, @curp, @telefono)";
 
                     // Crear el comando SQL con la consulta y la conexión
@@ -104,43 +122,67 @@ namespace Practica2
                         cmd.Parameters.AddWithValue("@telefono", telefono);
 
                         // Ejecutar la consulta
-                        cmd.ExecuteNonQuery();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        // Verificar si se guardaron los datos correctamente
+                        if (rowsAffected > 0)
+                        {
+                            // Mostrar mensaje de éxito
+                            MessageBox.Show("Los datos se han guardado correctamente en la base de datos.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            // Mostrar la lista de bases de datos en un mensaje
+                            string listaDBMessage = "Bases de datos existentes:\n";
+                            foreach (string dbName in listaBasesDatos)
+                            {
+                                listaDBMessage += "- " + dbName + "\n";
+                            }
+
+                            MessageBox.Show(listaDBMessage, "Bases de Datos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show("No se pudieron guardar los datos en la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     // Manejar cualquier error que pueda ocurrir durante el proceso de guardar
                     this.Invoke((MethodInvoker)delegate {
-                        MessageBox.Show("Error al guardar los datos:  " + ex.Message);
+                        MessageBox.Show("Error al guardar los datos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     });
                 }
             }
         }
 
-        // Asignar los eventos TextChanged para actualizar las variables
-        private void textBoxNombre_TextChanged(object sender, EventArgs e)
+
+
+        private void Nombre_TextChanged_1(object sender, EventArgs e)
         {
-            nombre = ((TextBox)sender).Text;
+            nombre = Nombre.Text;
         }
 
-        private void textBoxApellido_TextChanged(object sender, EventArgs e)
+        private void Apellido_TextChanged(object sender, EventArgs e)
         {
-            apellido = ((TextBox)sender).Text;
+            apellido = Apellido.Text;
         }
 
-        private void textBoxEdad_TextChanged(object sender, EventArgs e)
+        private void Edad_TextChanged(object sender, EventArgs e)
         {
-            edad = ((TextBox)sender).Text;
+            edad = Edad.Text;
         }
 
-        private void textBoxCurp_TextChanged(object sender, EventArgs e)
+        private void Curp_TextChanged(object sender, EventArgs e)
         {
-            curp = ((TextBox)sender).Text;
+            curp = Curp.Text;
         }
 
-        private void textBoxTelefono_TextChanged(object sender, EventArgs e)
+        private void Telefono_TextChanged(object sender, EventArgs e)
         {
-            telefono = ((TextBox)sender).Text;
+            telefono=Telefono.Text;
+           
         }
     }
 }
+
+     
